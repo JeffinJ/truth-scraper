@@ -81,6 +81,8 @@ async def start_scheduler():
         console.print(f"[blue]✅ - Next run: {scheduler.get_job('truth_scraper_interval').next_run_time}[/blue]")
         console.print(f"[blue]✅ - Scraper interval: {settings.truth_scraper_interval} seconds[/blue]")
         console.print(f"[blue]✅ - Target username: {settings.truth_profile_username}[/blue]")
+        console.print(f"[blue]✅ - Test mode: {'enabled' if TEST_MODE else 'disabled'}[/blue]")
+        console.print(f"[blue]✅ - Origins: {settings.origins}[/blue]")
         logger.info("AsyncIOScheduler started")
 
 
@@ -122,7 +124,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
