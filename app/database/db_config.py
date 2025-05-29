@@ -2,12 +2,16 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import declarative_base, sessionmaker
+from app.core import config
+from functools import lru_cache
+from app.core.config import settings
 
-DATABASE_URL = "postgresql+asyncpg://neondb_owner:npg_pn6SyDoG7csz@ep-square-bird-a50azatk-pooler.us-east-2.aws.neon.tech/neondb"
+
+
 
 engine = create_async_engine(
-    DATABASE_URL,
-    echo=True,  # Set to False in production
+    settings.database_url, 
+    echo=True,
     future=True,
     connect_args={"ssl": True}
 )
@@ -21,11 +25,7 @@ Base = declarative_base()
 async def init_db():
     async with engine.begin() as conn:
         from app.models import truths
-        from app.models import scraping_metadata
-        # Uncomment this line if you want to drop all tables and recreate them (CAREFUL in production!)
-        # await conn.run_sync(Base.metadata.drop_all)
         print(f"Models to create: {Base.metadata.tables.keys()}")
-        # Create all tables defined in imported models
         await conn.run_sync(Base.metadata.create_all)
     print("Database initialization complete!") 
 

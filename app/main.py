@@ -14,6 +14,7 @@ from app.services.truth_scraper_service import TruthScraperService
 from app.database.db_config import async_session, init_db
 from app.api.controllers import truth_controller
 from app.api.controllers import truth_sse_controller
+from app.core.config import settings
 
 # Fix for Playwright on Windows
 if sys.platform.startswith("win"):
@@ -23,7 +24,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 console = Console()
 
-TEST_MODE = False  # Set to True for testing with mock data
+# Set to True for testing with mock data
+TEST_MODE = False  
 
 origins = [
     "http://localhost:3000",
@@ -49,17 +51,17 @@ async def start_scheduler():
         if TEST_MODE:
             console.print("[yellow]🧪 Testing mode enabled - using mock data[/yellow]")
             truth_scraper = TestTruthScraperService(
-                target_username="realDonaldTrump",
+                target_username=settings.truth_profile_username,
                 truth_service=truth_service,
-                headless=False,  # Set to True for production
+                headless=False,  
                 scroll_iterations=4,
-                testing_mode=True  # Enable testing mode
+                testing_mode=True  
             )
         else:
             truth_scraper = TruthScraperService(
-                target_username="realDonaldTrump",
+                target_username=settings.truth_profile_username,
                 truth_service=truth_service,
-                headless=True,  # Set to True for production
+                headless=True, 
                 scroll_iterations=4
             )
     
@@ -68,14 +70,17 @@ async def start_scheduler():
 
         scheduler.add_job(
             scheduled_scrape_job,
-            trigger=IntervalTrigger(seconds=30),  # Run every 30 minutes
+            trigger=IntervalTrigger(seconds=settings.truth_scraper_interval),  # Run every x seconds/minutes
             id="truth_scraper_interval",
             name="Truth Social Scraper (Interval)",
             replace_existing=True
         )
 
         scheduler.start()
-        console.print("[green]✅ Scheduler started successfully![/green]")
+        console.print("[green]✅ - Scheduler started successfully![/green]")
+        console.print(f"[blue]✅ - Next run: {scheduler.get_job('truth_scraper_interval').next_run_time}[/blue]")
+        console.print(f"[blue]✅ - Scraper interval: {settings.truth_scraper_interval} seconds[/blue]")
+        console.print(f"[blue]✅ - Target username: {settings.truth_profile_username}[/blue]")
         logger.info("AsyncIOScheduler started")
 
 
