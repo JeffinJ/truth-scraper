@@ -5,7 +5,6 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 DATABASE_URL = "postgresql+asyncpg://neondb_owner:npg_pn6SyDoG7csz@ep-square-bird-a50azatk-pooler.us-east-2.aws.neon.tech/neondb"
 
-# Create async engine
 engine = create_async_engine(
     DATABASE_URL,
     echo=True,  # Set to False in production
@@ -13,15 +12,12 @@ engine = create_async_engine(
     connect_args={"ssl": True}
 )
 
-# Create async session factory
 async_session = sessionmaker(
     engine, class_=AsyncSession, expire_on_commit=False
 )
 
-# Create declarative base for models
 Base = declarative_base()
 
-# Add the missing init_db function
 async def init_db():
     async with engine.begin() as conn:
         from app.models import truths
@@ -33,7 +29,6 @@ async def init_db():
         await conn.run_sync(Base.metadata.create_all)
     print("Database initialization complete!") 
 
-# Dependency to get DB session
 async def get_db():
     async with async_session() as session:
         try:
