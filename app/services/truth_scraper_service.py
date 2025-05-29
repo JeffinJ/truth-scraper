@@ -100,7 +100,7 @@ class TruthScraperService:
             async with async_playwright() as playwright:
                 fetched_posts = await self._run_browser_session(playwright, start_url)
                 last_saved_post = await self.truth_service.get_last_truth()
-                last_saved_post_time = last_saved_post.timestamp
+                last_saved_post_time = last_saved_post.timestamp if last_saved_post else None
                 self.console.print(f"fetched_posts: {len(fetched_posts)} posts collected.")
                 self.console.print(f"[blue]Last saved post time: {last_saved_post_time}[/blue]")
                 
@@ -135,6 +135,11 @@ class TruthScraperService:
 
     async def _run_browser_session(self, playwright, start_url):
         """Run the browser session and collect posts"""
+        user_agent = (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+        )
+
         chrome = playwright.chromium
         browser = await chrome.launch(
             headless=self.headless,
@@ -142,7 +147,20 @@ class TruthScraperService:
         )
         
         try:
-            page = await browser.new_page()
+            
+            user_agent = (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+            )
+
+            context = await browser.new_context(
+                user_agent=user_agent,
+                viewport={"width": 1280, "height": 720},
+                locale="en-US"
+            )
+            page = await context.new_page()
+            
+            # page = await browser.new_page()
             
             # Create response handler instance
             handler = self.TruthResponseHandler(self)
@@ -150,9 +168,10 @@ class TruthScraperService:
             # Use a wrapper function to handle the response event
             page.on("response", lambda response: asyncio.create_task(handler.check_response(response)))
             
-            await page.goto(start_url)
+            await page.goto(start_url, wait_until="domcontentloaded")
             self.console.print("🔄 Loading page...")
             await page.wait_for_load_state("networkidle")
+            await asyncio.sleep(5)  
             
             # Handle cookie consent if present
             await self._handle_cookie_consent(page)

@@ -23,7 +23,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 console = Console()
 
-TEST_MODE = True
+TEST_MODE = False  # Set to True for testing with mock data
 
 origins = [
     "http://localhost:3000",
@@ -59,7 +59,7 @@ async def start_scheduler():
             truth_scraper = TruthScraperService(
                 target_username="realDonaldTrump",
                 truth_service=truth_service,
-                headless=False,  # Set to True for production
+                headless=True,  # Set to True for production
                 scroll_iterations=4
             )
     

@@ -69,7 +69,7 @@ class TruthRepository:
 
     async def get_all_truths(
             self, 
-            limit: int = 10, 
+            limit: int = 20, 
             offset: int = 0
         ) -> Dict[str, Any]:
 
