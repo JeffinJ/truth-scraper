@@ -12,8 +12,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from apscheduler.triggers.interval import IntervalTrigger
 from app.services.truth_scraper_service import TruthScraperService
 from app.database.db_config import async_session, init_db
-from app.api.v1.endpoints import truth_controller
-from app.api.v1.endpoints import truth_sse_controller
+from app.api.controllers import truth_controller
+from app.api.controllers import truth_sse_controller
 
 # Fix for Playwright on Windows
 if sys.platform.startswith("win"):
