@@ -24,7 +24,7 @@ Truth Scraper is a Python-based application designed to scrape and collect data 
 ### Docker
 
 ```bash
-docker build -t truth-api-docker 
+docker build -t truth-api-docker .
 ```
 
 ```bash
