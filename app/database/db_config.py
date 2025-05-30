@@ -7,7 +7,7 @@ from functools import lru_cache
 from app.core.config import settings
 
 
-
+print("Database URL:", settings.database_url)
 
 engine = create_async_engine(
     settings.database_url, 

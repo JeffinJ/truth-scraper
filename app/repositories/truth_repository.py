@@ -8,6 +8,7 @@ from app.models.truths import TruthModel
 
 logger = logging.getLogger(__name__)
 
+
 class TruthRepository:
     
     def __init__(self, session: AsyncSession):

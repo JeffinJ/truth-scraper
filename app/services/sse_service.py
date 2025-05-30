@@ -25,7 +25,6 @@ class SSEManager:
             logger.info("No SSE connections to broadcast to")
             return
         
-        # Prepare the data to send
         message = {
             "type": "new_truths",
             "data": truths_data,

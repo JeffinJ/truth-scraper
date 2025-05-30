@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta, timezone
 import random
-import uuid
 from typing import List, Dict
 from faker import Faker
 
@@ -42,8 +41,6 @@ class MockTruthPostGenerator:
         for i in range(count):
             # Generate timestamp that's newer than start_time
             post_time = start_time + timedelta(minutes=random.randint(1, 30))
-            
-            # Randomly decide if post has media
             has_media = random.choice([True, False, False])  # 33% chance
             
             post = {
@@ -53,7 +50,6 @@ class MockTruthPostGenerator:
                 "url": f"https://truthsocial.com/@realDonaldTrump/posts/{random.randint(100000, 999999)}",
             }
             
-            # Add media if selected
             if has_media:
                 post["media_urls"] = [random.choice(self.media_urls)]
             
@@ -84,6 +80,5 @@ class MockTruthPostGenerator:
             
             posts.append(post)
         
-        # Sort by timestamp (newest first, like Truth Social)
         posts.sort(key=lambda x: x["timestamp"], reverse=True)
         return posts

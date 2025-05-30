@@ -8,15 +8,16 @@ import asyncio
 import logging
 import random
 import json
+from app.core.config import settings
 
-class TestTruthScraperService:
+class MockTruthScraperService:
     def __init__(
         self, 
         truth_service: TruthService, 
         target_username="realDonaldTrump", 
         headless=True, 
         scroll_iterations=4,
-        testing_mode=False  # New parameter for testing
+        testing_mode=False 
     ):
         self.target_username = target_username
         self.headless = headless
@@ -53,8 +54,9 @@ class TestTruthScraperService:
         """Generate mock posts that simulate real scraping behavior"""
         await self.simulate_scraping_delay()
         
-        # Sometimes return no new posts (like real scraping)
-        if random.random() < 0.3:  # 30% chance of no new posts
+        # Return new posts with probability to mock no new posts
+        # 30% chance of no new posts
+        if random.random() < 0.3:  
             self.console.print("[yellow]🎭 Mock: No new posts found[/yellow]")
             return []
         
@@ -72,7 +74,6 @@ class TestTruthScraperService:
         
         self.console.print(f"[green]🎭 Mock: Generated {len(mock_posts)} new posts[/green]")
         self.console.print("User Data:\n%s", json.dumps(mock_posts, indent=4))
-        
         return mock_posts
 
     async def scrape_posts(self):
@@ -80,13 +81,12 @@ class TestTruthScraperService:
         try:
             self.console.print("🚀 Starting Truth Social scraper...")
             
-            # Use mock data if in testing mode
             if self.testing_mode:
                 self.console.print("[yellow]🧪 TESTING MODE: Using mock data[/yellow]")
                 fetched_posts = await self.generate_mock_posts_for_testing()
             else:
                 # Original scraping logic
-                start_url = f"https://truthsocial.com/@{self.target_username}"
+                start_url = f"{settings.truth_social_base_url}/{self.target_username}"
                 async with async_playwright() as playwright:
                     fetched_posts = await self._run_browser_session(playwright, start_url)
             
@@ -157,8 +157,6 @@ class TestTruthScraperService:
     
         return datetime.fromisoformat(dt_str)
 
-    # ... (rest of your existing methods remain the same)
-    
     async def extract_key_properties(self, posts_data):
         """Extract key properties from posts data"""
         simplified_posts = []
@@ -187,5 +185,3 @@ class TestTruthScraperService:
         posts = await self.scrape_posts()
         self.console.print(f"[cyan]📅 Scheduled scrape completed. Collected {len(posts)} posts. [{mode}][/cyan]")
         return posts
-
-    # ... (include all your other existing methods here)

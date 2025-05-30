@@ -1,7 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Annotated, List, Dict, Any
 import logging
-
 from app.database.db_config import DbSession
 from app.repositories.truth_repository import TruthRepository, get_truths_repository
 from app.schemas.truth import TruthSchema
@@ -23,15 +22,6 @@ class TruthService:
     
     
     async def get_last_truth(self) -> TruthSchema:
-        """
-        Get the most recent Truth Social post from the database
-
-        Args:
-            db: Database session
-
-        Returns:
-            TruthSchema: The most recent post as a Pydantic model or None if not found
-        """
         post = await self.truth_repository.get_last_truth()
         if not post:
             return None
@@ -46,19 +36,6 @@ class TruthService:
         
 
     async def save_truths(self,truths_data: List[Dict[Any, Any]]) -> List[TruthSchema]:
-        """
-        Save Truth Social posts to the database
-
-        Args:
-            db: Database session
-            truths_data: List of dictionaries containing Truth Social post data
-
-        Returns:
-            List[TruthSchema]: The saved posts as Pydantic models
-        """
-        logger.info(f"Saving {len(truths_data)} Truth Social posts to database")
-        
-        # Save posts to database
         saved_posts = await self.truth_repository.create_or_update_truth(truths_data)
 
         pydantic_posts = [
@@ -72,12 +49,11 @@ class TruthService:
             for post in saved_posts
         ]
 
-            # Broadcast new truths via SSE
         if pydantic_posts:
             broadcast_data = []
             for post in pydantic_posts:
                 post_dict = post.dict()
-                # Convert datetime to string for JSON serialization
+                # Convert datetime to string for JSON support
                 if post_dict.get('timestamp'):
                     post_dict['timestamp'] = str(post_dict['timestamp'])
                 broadcast_data.append(post_dict)

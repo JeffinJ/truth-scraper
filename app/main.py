@@ -2,16 +2,15 @@ import sys
 import asyncio
 import logging
 from contextlib import asynccontextmanager
-from app.repositories.truth_repository import TruthRepository
-from app.services.t_scraper_service import TestTruthScraperService
-from app.services.truth_service import TruthService
+
+from app.services.scraping_scheduler_service import ScrapingSchedulerService
+from dotenv import load_dotenv
+load_dotenv(".env", override=True)
+
 from rich.console import Console
 from fastapi import FastAPI
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi.middleware.cors import CORSMiddleware
-from apscheduler.triggers.interval import IntervalTrigger
-from app.services.truth_scraper_service import TruthScraperService
-from app.database.db_config import async_session, init_db
+from app.database.db_config import init_db
 from app.api.controllers import truth_controller
 from app.api.controllers import truth_sse_controller
 from app.core.config import settings
@@ -23,98 +22,44 @@ if sys.platform.startswith("win"):
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 console = Console()
-
-# Set to True for testing with mock data
 TEST_MODE = False  
-
-origins = [
-    "http://localhost:3000",
-]
-
-async def scheduled_scrape_job():
-    """Job function that will be called by the scheduler"""
-    try:
-        await truth_scraper.run_once()
-    except Exception as e:
-        logger.error(f"Scheduled scrape job failed: {e}")
-        console.print(f"[red]Scheduled scrape failed: {e}[/red]")
-
-
-async def start_scheduler():
-    """Initialize and start the scheduler"""    
-    async with async_session() as session:
-        global scheduler, truth_scraper
-        
-        truth_repo = TruthRepository(session)
-        truth_service = TruthService(truth_repo)
-
-        if TEST_MODE:
-            console.print("[yellow]🧪 Testing mode enabled - using mock data[/yellow]")
-            truth_scraper = TestTruthScraperService(
-                target_username=settings.truth_profile_username,
-                truth_service=truth_service,
-                headless=False,  
-                scroll_iterations=4,
-                testing_mode=True  
-            )
-        else:
-            truth_scraper = TruthScraperService(
-                target_username=settings.truth_profile_username,
-                truth_service=truth_service,
-                headless=True, 
-                scroll_iterations=4
-            )
-    
-        # Initialize scheduler
-        scheduler = AsyncIOScheduler()
-
-        scheduler.add_job(
-            scheduled_scrape_job,
-            trigger=IntervalTrigger(seconds=settings.truth_scraper_interval),  # Run every x seconds/minutes
-            id="truth_scraper_interval",
-            name="Truth Social Scraper (Interval)",
-            replace_existing=True
-        )
-
-        scheduler.start()
-        console.print("[green]✅ - Scheduler started successfully![/green]")
-        console.print(f"[blue]✅ - Next run: {scheduler.get_job('truth_scraper_interval').next_run_time}[/blue]")
-        console.print(f"[blue]✅ - Scraper interval: {settings.truth_scraper_interval} seconds[/blue]")
-        console.print(f"[blue]✅ - Target username: {settings.truth_profile_username}[/blue]")
-        console.print(f"[blue]✅ - Test mode: {'enabled' if TEST_MODE else 'disabled'}[/blue]")
-        console.print(f"[blue]✅ - Origins: {settings.origins}[/blue]")
-        logger.info("AsyncIOScheduler started")
-
-
-def stop_scheduler():
-    """Stop the scheduler"""
-    global scheduler
-    if scheduler:
-        scheduler.shutdown()
-        console.print("[yellow]⏹️  Scheduler stopped[/yellow]")
-        logger.info("AsyncIOScheduler stopped")
-
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage application lifespan - startup and shutdown"""
     console.print("[blue]🚀 Starting application...[/blue]")
-    await init_db()  # Initialize the database
-    await start_scheduler()
-    # try:
-    #     console.print("[cyan]🔄 Running initial scrape...[/cyan]")
-    #     await truth_scraper.run_once()
-    # except Exception as e:
-    #     logger.error(f"Initial scrape failed: {e}")
-    #     console.print(f"[red]Initial scrape failed: {e}[/red]")
+    
+    try:
+        # Initialize database
+        await init_db()
+        console.print("[green]✅ Database initialized[/green]")
+        
+        # Initialize and start scraping scheduler service
+        scheduler_service = ScrapingSchedulerService(test_mode=TEST_MODE)
+        await scheduler_service.start()
+        app.state.scheduler_service = scheduler_service
+        console.print("[green]🎉 Application startup completed![/green]")
+        
+    except Exception as e:
+        console.print(f"[red]🔥 Application startup failed: {e}[/red]")
+        logger.error(f"Application startup failed: {e}", exc_info=True)
+        raise
+    
     yield
     
-    # Shutdown
     console.print("[blue]🛑 Shutting down application...[/blue]")
-    stop_scheduler()
+    
+    try:
+        if hasattr(app.state, 'scheduler_service'):
+            await app.state.scheduler_service.stop()
+            
+        console.print("[green]✅ Application shutdown completed[/green]")
+        
+    except Exception as e:
+        console.print(f"[red]🔥 Error during shutdown: {e}[/red]")
+        logger.error(f"Error during shutdown: {e}", exc_info=True)
+        
 
-# Create FastAPI app with lifespan
 app = FastAPI(
     title="Truth Social Scraper API",
     description="API with automated Truth Social scraping",
@@ -136,3 +81,28 @@ app.include_router(truth_controller.router, prefix="/api/v1", tags=["truths"])
 @app.get("/")
 async def root():
     return {"message": "Truth Social Scraper API is running"}
+
+
+@app.post("/scrape/pause")
+async def pause_scraper():
+    """Pause the scheduled scraping"""
+    success = app.state.scheduler_service.pause_job()
+    return {
+        "status": "success" if success else "error",
+        "message": "Scraper paused" if success else "Failed to pause scraper"
+    }
+    
+@app.post("/api/v1/scrape/resume")
+async def resume_scraper():
+    """Resume the scheduled scraping"""
+    success = app.state.scheduler_service.resume_job()
+    return {
+        "status": "success" if success else "error",
+        "message": "Scraper resumed" if success else "Failed to resume scraper"
+    }
+    
+    
+@app.get("/api/v1/scrape/status")
+async def scraper_status():
+    """Get current scraper status"""
+    return app.state.scheduler_service.get_status()
