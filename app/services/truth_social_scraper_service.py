@@ -107,6 +107,7 @@ class TruthSocialScraperService:
         try:
             self.console.print("🚀 Starting Truth Social scraper...")
             start_url = f"{settings.truth_social_base_url}/{self.target_username}"
+            self.console.print(f"🌐 Starting URL: {start_url}")
             
             async with async_playwright() as playwright:
                 fetched_posts = await self._run_browser_session(playwright, start_url)

@@ -30,3 +30,17 @@ docker build -t truth-api-docker .
 ```bash
 docker run -d --name truth-api-docker-container -p 80:80 truth-api-docker
 ```
+
+
+```bash
+docker build -t truth-api-docker .
+```
+
+
+```bash
+ docker run --env-file .env -d --name truth-api-docker-container -p 8000:80 truth-api-docker
+```
+
+```bash
+docker logs -f --tail 50 truth-api-docker-container
+```
