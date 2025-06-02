@@ -37,13 +37,13 @@ async def lifespan(app: FastAPI):
         
         # Initialize AI processing service
         ai_processing_service = AIProcessingService()
-        # await ai_processing_service.start(num_workers=2)
+        await ai_processing_service.start(num_workers=2)
         app.state.ai_processing_service = ai_processing_service
         console.print("[green]✅ AI processing service started[/green]")
         
         # Initialize and start scraping scheduler service
         scheduler_service = ScrapingSchedulerService(test_mode=TEST_MODE, ai_processing_service=ai_processing_service)
-        # await scheduler_service.start()
+        await scheduler_service.start()
         app.state.scheduler_service = scheduler_service
         console.print("[green]🎉 Application startup completed![/green]")
         
