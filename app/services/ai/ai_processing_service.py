@@ -83,10 +83,9 @@ class AIProcessingService:
             truth_repo = TruthRepository(session)
             try:
                 logger.info(f"Starting AI processing for truth ID {truth_id}...")
-                summary, context = await self.ai_service.generate_summary_and_context(truth_content=truth.content)
+                context = await self.ai_service.generate_summary_and_context(truth_content=truth.content)
                 logger.info(f"AI processing completed for truth ID {truth_id}.")
                 
-                truth.ai_summary = summary
                 truth.ai_context = context
                 truth.ai_processed = True
                 
@@ -99,7 +98,6 @@ class AIProcessingService:
                         timestamp=updated_truth.timestamp,
                         url=updated_truth.url,
                         media_urls=updated_truth.media_urls or [],
-                        ai_summary=updated_truth.ai_summary,
                         ai_context=updated_truth.ai_context,
                         ai_processed=updated_truth.ai_processed,
                         ai_processing=updated_truth.ai_processing
