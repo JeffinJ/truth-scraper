@@ -9,9 +9,10 @@ from apscheduler.job import Job
 from rich.console import Console
 
 from app.repositories.truth_repository import TruthRepository
+from app.services.ai.ai_processing_service import AIProcessingService
 from app.services.truth_service import TruthService
-from app.services.mock_scraper_service import MockTruthScraperService
-from app.services.truth_social_scraper_service import TruthSocialScraperService
+from app.services.scraper.mock_scraper_service import MockTruthScraperService
+from app.services.scraper.truth_social_scraper_service import TruthSocialScraperService
 from app.database.db_config import async_session
 from app.core.config import settings
 
@@ -22,9 +23,14 @@ console = Console()
 class ScrapingSchedulerService:
     """Service to manage the async scheduler and scraping jobs"""
     
-    def __init__(self, test_mode: bool = False):
+    def __init__(
+                    self, 
+                    ai_processing_service: AIProcessingService,
+                    test_mode: bool = False
+                 ):
         self.scheduler: Optional[AsyncIOScheduler] = None
         self.truth_scraper = None
+        self.ai_processing_service = ai_processing_service
         self.test_mode = test_mode
         self._is_running = False
         self._job_id = "truth_scraper_interval"
@@ -119,6 +125,7 @@ class ScrapingSchedulerService:
                     self.truth_scraper = TruthSocialScraperService(
                         target_username=settings.truth_profile_username,
                         truth_service=truth_service,
+                        ai_processing_service=self.ai_processing_service,
                         headless=True,
                         scroll_iterations=4
                     )

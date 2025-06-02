@@ -15,7 +15,8 @@ class TruthService:
     
     def __init__(
             self, 
-            truth_repository: truth_repository_dependency
+            truth_repository: truth_repository_dependency,
+            
         ):
         self.truth_repository = truth_repository
         pass
@@ -44,7 +45,11 @@ class TruthService:
                 content=post.content,
                 timestamp=post.timestamp,
                 url=post.url,
-                media_urls=post.media_urls or []
+                media_urls=post.media_urls or [],
+                ai_summary=post.ai_summary,
+                ai_context=post.ai_context,
+                ai_processed=post.ai_processed,
+                ai_processing=post.ai_processing
             )
             for post in saved_posts
         ]
@@ -58,8 +63,9 @@ class TruthService:
                     post_dict['timestamp'] = str(post_dict['timestamp'])
                 broadcast_data.append(post_dict)
 
-            logger.info(f"Broadcasting {broadcast_data} truths to SSE clients")
-            await sse_manager.broadcast_truths(broadcast_data)
+            logger.info(f"Broadcasting {len(broadcast_data)} truths to SSE clients")
+            await sse_manager.broadcast_truths(broadcast_data, broadcast_type="new_truths")
+
 
         return pydantic_posts
 

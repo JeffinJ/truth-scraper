@@ -1,4 +1,5 @@
 from playwright.async_api import async_playwright
+from app.services.ai.ai_processing_service import AIProcessingService
 from app.services.truth_service import TruthService
 from rich.console import Console
 from datetime import datetime
@@ -66,6 +67,7 @@ class TruthSocialScraperService:
     def __init__(
             self, 
             truth_service: TruthService, 
+            ai_processing_service: AIProcessingService,
             target_username: str = None, 
             headless: bool = True, 
             scroll_iterations: int = 4
@@ -73,6 +75,7 @@ class TruthSocialScraperService:
         self.target_username = target_username
         self.headless = headless
         self.truth_service = truth_service
+        self.ai_processing_service = ai_processing_service
         self.scroll_iterations = scroll_iterations
         self.console = Console()
         self.logger = self._setup_logger()
@@ -132,8 +135,14 @@ class TruthSocialScraperService:
                 # Save the posts to the database
                 if new_posts:
                     self.console.print(f"[blue]--Saving {len(new_posts)} posts to database...[/blue]")
-                    await self.truth_service.save_truths(new_posts)
+                    saved_truths = await self.truth_service.save_truths(new_posts)
                     self.console.print("[green]Posts saved to database![/green]")
+                    self.console.print(f"[blue]--{len(saved_truths)} posts saved successfully.[/blue]")
+                    
+                    self.console.print(f"[blue]--Queueing {len(saved_truths)} posts for AI processing...[/blue]")
+                    for truth_obj in saved_truths:
+                        await self.ai_processing_service.queue_truth_for_processing(truth_obj)
+                    self.console.print("[green]Posts queued for AI processing![/green]")
                 else:
                     self.console.print("[yellow]No posts collected.[/yellow]")
                 

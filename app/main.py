@@ -3,7 +3,8 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 
-from app.services.scraping_scheduler_service import ScrapingSchedulerService
+from app.services.ai.ai_processing_service import AIProcessingService
+from app.services.scraper.scraping_scheduler_service import ScrapingSchedulerService
 from dotenv import load_dotenv
 load_dotenv(".env", override=True)
 
@@ -34,8 +35,14 @@ async def lifespan(app: FastAPI):
         await init_db()
         console.print("[green]✅ Database initialized[/green]")
         
+        # Initialize AI processing service
+        ai_processing_service = AIProcessingService()
+        await ai_processing_service.start(num_workers=2)
+        app.state.ai_processing_service = ai_processing_service
+        console.print("[green]✅ AI processing service started[/green]")
+        
         # Initialize and start scraping scheduler service
-        scheduler_service = ScrapingSchedulerService(test_mode=TEST_MODE)
+        scheduler_service = ScrapingSchedulerService(test_mode=TEST_MODE, ai_processing_service=ai_processing_service)
         await scheduler_service.start()
         app.state.scheduler_service = scheduler_service
         console.print("[green]🎉 Application startup completed![/green]")
@@ -52,6 +59,9 @@ async def lifespan(app: FastAPI):
     try:
         if hasattr(app.state, 'scheduler_service'):
             await app.state.scheduler_service.stop()
+            
+        if hasattr(app.state, 'ai_processing_service'):
+            await app.state.ai_processing_service.stop()
             
         console.print("[green]✅ Application shutdown completed[/green]")
         

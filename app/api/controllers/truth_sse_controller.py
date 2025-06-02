@@ -23,23 +23,18 @@ async def stream_truths(request: Request):
             logger.info("🔥 New SSE client connected")
             
             while True:
-                # Check if client disconnected
                 if await request.is_disconnected():
                     logger.info("🔥 SSE client disconnected")
                     break
                 
                 try:
-                    # Wait for new data with timeout
                     message = await asyncio.wait_for(connection_queue.get(), timeout=30.0)
-                    
-                    # Send the truth data as SSE event
                     yield {
-                        "event": "new_truths",
+                        "event": "truths",
                         "data": json.dumps(message)
                     }
                     
                 except asyncio.TimeoutError:
-                    # Send heartbeat to keep connection alive
                     yield {
                         "event": "heartbeat",
                         "data": json.dumps({"timestamp": str(asyncio.get_event_loop().time())})

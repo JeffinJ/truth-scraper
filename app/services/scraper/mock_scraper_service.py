@@ -1,7 +1,7 @@
 from fastapi import Depends
 from playwright.async_api import async_playwright
 from app.services.truth_service import TruthService
-from app.services.mock_truth_generator import MockTruthPostGenerator
+from app.services.scraper.mock_truth_generator import MockTruthPostGenerator
 from rich.console import Console
 from datetime import datetime
 import asyncio

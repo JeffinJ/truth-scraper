@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, Text, ARRAY
+from sqlalchemy import Column, String, DateTime, Text, ARRAY, Boolean
 from sqlalchemy.dialects.postgresql import BIGINT
 from app.database.db_config import Base
 
@@ -9,4 +9,8 @@ class TruthModel(Base):
     content = Column(Text)
     timestamp = Column(DateTime(timezone=True))
     url = Column(String, unique=True)
-    media_urls = Column(ARRAY(String)) 
+    media_urls = Column(ARRAY(String))
+    ai_summary = Column(Text, nullable=True)
+    ai_context = Column(Text, nullable=True)
+    ai_processed = Column(Boolean, default=False)
+    ai_processing = Column(Boolean, default=False)
