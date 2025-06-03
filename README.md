@@ -9,14 +9,14 @@ Truth Scraper is a Python-based application designed to scrape and collect data 
 ## Features
 
 - **Real-time scraping** of Truth Social user profiles
-- Written in **Python** for versatility and ease of use
-- Docker support for easy deployment and reproducibility
-- Extensible architecture for adding new scraping targets or output formats
+- Docker support for easy deployment
+- Open AI integration for generating context related to the truth data.
+
 
 ## Requirements
 
-- Python 3.7+
-- Docker (optional, for containerized deployments)
+- Python 3.10
+- Docker
 - Required Python packages (see [`requirements.txt`](requirements.txt))
 
 ## Installation
@@ -43,4 +43,10 @@ docker build -t truth-api-docker .
 
 ```bash
 docker logs -f --tail 50 truth-api-docker-container
+```
+
+### Running locally
+
+```bash
+uvicorn app.main:app
 ```
