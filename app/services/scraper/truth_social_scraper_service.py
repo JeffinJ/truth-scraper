@@ -27,9 +27,6 @@ class TruthSocialResponseHandler:
         """Process successful API response"""
         data = await response.json()
         truths_data = await self.parent.extract_post_data(data)
-        self.parent.logger.info("User Data:\n%s", json.dumps(truths_data, indent=4))
-        
-        # Append the extracted posts to our collection
         self.collected_posts.extend(truths_data)
         
     async def check_response(self, response):

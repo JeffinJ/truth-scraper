@@ -32,7 +32,6 @@ class AIProcessingService:
             self.worker_tasks.append(task)
     
     async def stop(self):
-        """Stop AI processing workers"""
         logger.info("Stopping AI processing workers")
         self.is_running = False
         
@@ -45,24 +44,16 @@ class AIProcessingService:
         self.worker_tasks.clear()
     
     async def queue_truth_for_processing(self, truth_data: TruthSchema):
-        """Add a truth to the AI processing queue"""
         await self.processing_queue.put(truth_data)
-        logger.info(f"🚀🚀🚀 - Queued truth {truth_data} for AI processing")
     
     async def _worker(self, worker_name: str):
-        """Background worker for processing AI summaries"""
         logger.info(f"🚀🚀🚀 - AI worker {worker_name} started")
-        logger.debug(f"🚀🚀🚀 - Worker {worker_name} is running with queue size: {self.processing_queue.qsize()}")
-        logger.debug(f"🚀🚀🚀 - Worker {worker_name} is running with is_running: {self.is_running}")
         while self.is_running:
             try:
-                logger.debug(f"🟦🟦🟦🟦🟦🟦🟦 Worker {worker_name} waiting for truth ID")
                 truth_data = await asyncio.wait_for(
                     self.processing_queue.get(), 
                     timeout=30.0
                 )
-                
-                logger.info(f"Worker {worker_name} processing truth {truth_data}")
                 await self._process_truth_ai(truth_data)
                 self.processing_queue.task_done()
                 
@@ -77,14 +68,11 @@ class AIProcessingService:
         logger.info(f"AI worker {worker_name} stopped")
     
     async def _process_truth_ai(self, truth: TruthSchema):
-        logger.info(f"🚀🚀🚀- Processing AI for truth {truth.id}")
         truth_id = truth.id
         async with async_session() as session:
             truth_repo = TruthRepository(session)
             try:
-                logger.info(f"Starting AI processing for truth ID {truth_id}...")
                 context = await self.ai_service.generate_summary_and_context(truth_content=truth.content)
-                logger.info(f"AI processing completed for truth ID {truth_id}.")
                 
                 truth.ai_context = context
                 truth.ai_processed = True

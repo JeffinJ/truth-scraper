@@ -21,8 +21,6 @@ console = Console()
 
 
 class ScrapingSchedulerService:
-    """Service to manage the async scheduler and scraping jobs"""
-    
     def __init__(
                     self, 
                     ai_processing_service: AIProcessingService,
@@ -36,7 +34,6 @@ class ScrapingSchedulerService:
         self._job_id = "truth_scraper_interval"
         
     async def start(self) -> None:
-        """Initialize and start the scheduler with scraping job"""
         if self._is_running:
             logger.warning("Scheduler is already running")
             return
@@ -75,7 +72,7 @@ class ScrapingSchedulerService:
         except Exception as e:
             logger.error(f"Failed to start scheduler: {e}", exc_info=True)
             console.print(f"[red]❌ Failed to start scheduler: {e}[/red]")
-            await self.stop()  # Cleanup on failure
+            await self.stop() 
             raise
     
     async def stop(self) -> None:
@@ -85,7 +82,6 @@ class ScrapingSchedulerService:
             return
             
         try:
-            # Stop scheduler
             if self.scheduler:
                 self.scheduler.shutdown(wait=True)
                 self.scheduler = None
@@ -153,8 +149,8 @@ class ScrapingSchedulerService:
             logger.error(f"Scheduled scrape job failed: {e}", exc_info=True)
             console.print(f"[red]❌ Scheduled scrape failed: {e}[/red]")
             
-            # TODO: Implement retry logic or circuit breaker pattern
-            # TODO: Add alerting for persistent failures
+            # TODO: Add retry logic or circuit breaker pattern
+            # TODO: Add reporting
     
     async def run_manual_scrape(self) -> dict:
         """Manually trigger a scrape job (useful for API endpoints)"""

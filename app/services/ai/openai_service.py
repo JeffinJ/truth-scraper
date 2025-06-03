@@ -30,7 +30,12 @@ class OpenAIService:
             
             context_response = await self.client.chat.completions.create(
                 model="gpt-3.5-turbo", 
-                messages=[{"role": "user", "content": context_prompt}],
+                messages=[
+                        {
+                            "role": "user", 
+                            "content": context_prompt
+                        }
+                    ],
                 max_tokens=150,
                 temperature=0.3
             )
@@ -42,7 +47,6 @@ class OpenAIService:
             return context
             
         except Exception as e:
-            logger.exception("AI service error")
             logger.info(f"AI service error: {e}")
             return None, None
 

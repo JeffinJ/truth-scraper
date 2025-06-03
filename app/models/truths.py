@@ -10,7 +10,6 @@ class TruthModel(Base):
     timestamp = Column(DateTime(timezone=True))
     url = Column(String, unique=True)
     media_urls = Column(ARRAY(String))
-    ai_summary = Column(Text, nullable=True)
     ai_context = Column(Text, nullable=True)
     ai_processed = Column(Boolean, default=False)
     ai_processing = Column(Boolean, default=False)

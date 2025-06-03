@@ -27,7 +27,6 @@ async def summarize_truths(
     ai_service: ai_service_dependency,
 ):
     try:
-        # log request body
         print(f"Received request body: {item}")
         await ai_service.generate_summary_and_context(item.content)
         return {"message": "Truths summarized successfully"}
